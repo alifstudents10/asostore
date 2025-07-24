@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, Plus, Edit3, CreditCard, Users, Search, RefreshCw, Trash2 } from 'lucide-react'
+import { ArrowLeft, Plus, Edit3, CreditCard, Users, Search, RefreshCw, Trash2, Upload, Download } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import type { Student, Transaction } from '../types/database'
-import ConnectionStatus from './ConnectionStatus'
 
 interface AdminPanelProps {
   onBack: () => void
@@ -20,6 +19,9 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [editingStudent, setEditingStudent] = useState<Student | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Student | null>(null)
+  const [showImportModal, setShowImportModal] = useState(false)
+  const [csvFile, setCsvFile] = useState<File | null>(null)
+  const [importPreview, setImportPreview] = useState<any[]>([])
 
   // Form states
   const [studentForm, setStudentForm] = useState({
@@ -33,6 +35,8 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
     type: 'credit' as 'credit' | 'debit',
     reason: ''
   })
+
+  const validClasses = ['S1', 'S2', 'D1', 'D3']
 
   useEffect(() => {
     checkAuth()
@@ -183,6 +187,101 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
     }
   }
 
+  const downloadTemplate = () => {
+    const csvContent = `name,admission_number,class,balance
+John Doe,ADM001,S1,1000
+Jane Smith,ADM002,S2,1500
+Mike Johnson,ADM003,D1,2000
+Sarah Wilson,ADM004,D3,500`
+
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'students_template.csv'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+  }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setCsvFile(file)
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const csv = event.target?.result as string
+      const lines = csv.split('\n')
+      const headers = lines[0].split(',').map(h => h.trim())
+      
+      const preview = lines.slice(1, 6).map((line, index) => {
+        const values = line.split(',').map(v => v.trim())
+        const student: any = {}
+        headers.forEach((header, i) => {
+          student[header] = values[i] || ''
+        })
+        student.rowIndex = index + 2 // +2 because we skip header and start from line 2
+        return student
+      }).filter(student => student.name) // Filter out empty rows
+      
+      setImportPreview(preview)
+    }
+    reader.readAsText(file)
+  }
+
+  const handleImportStudents = async () => {
+    if (!csvFile) return
+
+    const reader = new FileReader()
+    reader.onload = async (event) => {
+      const csv = event.target?.result as string
+      const lines = csv.split('\n')
+      const headers = lines[0].split(',').map(h => h.trim())
+      
+      const studentsToImport = lines.slice(1).map(line => {
+        const values = line.split(',').map(v => v.trim())
+        const student: any = {}
+        headers.forEach((header, i) => {
+          student[header] = values[i] || ''
+        })
+        return student
+      }).filter(student => student.name && student.admission_number && student.class)
+
+      // Validate classes
+      const invalidStudents = studentsToImport.filter(s => !validClasses.includes(s.class))
+      if (invalidStudents.length > 0) {
+        alert(`Invalid classes found. Valid classes are: ${validClasses.join(', ')}`)
+        return
+      }
+
+      try {
+        const { error } = await supabase
+          .from('students')
+          .insert(studentsToImport.map(s => ({
+            name: s.name,
+            admission_number: s.admission_number,
+            class: s.class,
+            balance: parseFloat(s.balance) || 0
+          })))
+
+        if (error) {
+          alert('Import failed: ' + error.message)
+        } else {
+          alert(`Successfully imported ${studentsToImport.length} students`)
+          setShowImportModal(false)
+          setCsvFile(null)
+          setImportPreview([])
+          loadStudents()
+        }
+      } catch (err) {
+        alert('Import failed: ' + err)
+      }
+    }
+    reader.readAsText(csvFile)
+  }
+
   const startEditStudent = (student: Student) => {
     setEditingStudent(student)
     setStudentForm({
@@ -295,10 +394,6 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
           onClick={handleLogout}
           className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
         >
-          Logout
-        </button>
-      </div>
-
       <div className="bg-white rounded-xl shadow-lg">
         {/* Header */}
         <div className="border-b border-gray-200 p-6">
@@ -358,6 +453,13 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                   >
                     <RefreshCw className="h-4 w-4" />
                     <span>Refresh</span>
+                  </button>
+                  <button
+                    onClick={() => setShowImportModal(true)}
+                    className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+                  >
+                    <Upload className="h-4 w-4" />
+                    <span>Import CSV</span>
                   </button>
                   <button
                     onClick={() => setShowAddStudent(true)}
@@ -526,8 +628,10 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                   value={studentForm.class}
                   onChange={(e) => setStudentForm({ ...studentForm, class: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="S1, S2, D1, or D3"
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1">Valid classes: S1, S2, D1, D3</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Initial Balance</label>
@@ -595,8 +699,10 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                   value={studentForm.class}
                   onChange={(e) => setStudentForm({ ...studentForm, class: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="S1, S2, D1, or D3"
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1">Valid classes: S1, S2, D1, D3</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Balance</label>
@@ -732,6 +838,100 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                   Delete Student
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CSV Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Import Students from CSV</h3>
+            
+            <div className="mb-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <h4 className="font-medium text-blue-900 mb-2">CSV Format Requirements:</h4>
+                <ul className="text-blue-800 text-sm space-y-1">
+                  <li>• Headers: name, admission_number, class, balance</li>
+                  <li>• Valid classes: S1, S2, D1, D3</li>
+                  <li>• Balance should be a number (optional, defaults to 0)</li>
+                  <li>• Admission numbers must be unique</li>
+                </ul>
+              </div>
+              
+              <button
+                onClick={downloadTemplate}
+                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors mb-4"
+              >
+                <Download className="h-4 w-4" />
+                <span>Download Template</span>
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select CSV File
+              </label>
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleFileUpload}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            {importPreview.length > 0 && (
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-900 mb-2">Preview (First 5 rows):</h4>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full border border-gray-200 rounded-lg">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Admission #</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Class</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Balance</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {importPreview.map((student, index) => (
+                        <tr key={index} className={validClasses.includes(student.class) ? '' : 'bg-red-50'}>
+                          <td className="px-4 py-2 text-sm text-gray-900">{student.name}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900">{student.admission_number}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900">
+                            {student.class}
+                            {!validClasses.includes(student.class) && (
+                              <span className="text-red-600 text-xs ml-1">(Invalid)</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-2 text-sm text-gray-900">{student.balance || '0'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <div className="flex space-x-3 pt-4">
+              <button
+                onClick={() => {
+                  setShowImportModal(false)
+                  setCsvFile(null)
+                  setImportPreview([])
+                }}
+                className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleImportStudents}
+                disabled={!csvFile || importPreview.length === 0}
+                className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white py-2 px-4 rounded-lg transition-colors"
+              >
+                Import Students
+              </button>
             </div>
           </div>
         </div>

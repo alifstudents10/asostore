@@ -10,13 +10,31 @@ interface StudentLoginProps {
 
 export default function StudentLogin({ onBack }: StudentLoginProps) {
   const [admissionNumber, setAdmissionNumber] = useState('')
+  const [classCode, setClassCode] = useState('')
   const [student, setStudent] = useState<StudentWithTransactions | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const validClassCodes = {
+    'S1': 'S1001',
+    'S2': 'S2002', 
+    'D1': 'D1003',
+    'D3': 'D3004'
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!admissionNumber.trim()) return
+    if (!admissionNumber.trim() || !classCode.trim()) return
+
+    // Validate class code
+    const studentClass = Object.keys(validClassCodes).find(
+      key => validClassCodes[key as keyof typeof validClassCodes] === classCode.trim()
+    )
+
+    if (!studentClass) {
+      setError('Invalid class code. Please check with your class teacher.')
+      return
+    }
 
     setLoading(true)
     setError('')
@@ -27,10 +45,11 @@ export default function StudentLogin({ onBack }: StudentLoginProps) {
         .from('students')
         .select('*')
         .eq('admission_number', admissionNumber.trim())
+        .eq('class', studentClass)
         .single()
 
       if (studentError) {
-        setError('Student not found. Please check your admission number.')
+        setError('Student not found. Please check your admission number and class code.')
         return
       }
 
@@ -186,20 +205,34 @@ export default function StudentLogin({ onBack }: StudentLoginProps) {
         <span>Back to Home</span>
       </button>
 
-      <ConnectionStatus />
-
-      <ConnectionStatus />
-
       <div className="bg-white rounded-xl shadow-lg p-8">
         <div className="text-center mb-8">
           <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
             <User className="h-8 w-8 text-blue-600" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Student Login</h2>
-          <p className="text-gray-600">Enter your admission number to check your balance</p>
+          <p className="text-gray-600">Enter your class code and admission number to check your balance</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
+          <div>
+            <label htmlFor="classCode" className="block text-sm font-medium text-gray-700 mb-2">
+              Class Code
+            </label>
+            <input
+              id="classCode"
+              type="text"
+              value={classCode}
+              onChange={(e) => setClassCode(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-lg"
+              placeholder="Enter your class code (e.g., S1001)"
+              required
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Class codes: S1001 (S1), S2002 (S2), D1003 (D1), D3004 (D3)
+            </p>
+          </div>
+
           <div>
             <label htmlFor="admission" className="block text-sm font-medium text-gray-700 mb-2">
               Admission Number
@@ -226,7 +259,7 @@ export default function StudentLogin({ onBack }: StudentLoginProps) {
             disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white py-3 px-4 rounded-lg font-semibold transition-colors text-lg"
           >
-            {loading ? 'Checking...' : 'Check Balance'}
+            {loading ? 'Verifying...' : 'Check Balance'}
           </button>
         </form>
       </div>

@@ -5,13 +5,14 @@ A modern, secure prepaid wallet system designed specifically for college student
 ## Features
 
 ### For Students
-- **Balance Checking**: Quick balance lookup using admission number
+- **Balance Checking**: Quick balance lookup using class code and admission number
 - **Transaction History**: View complete purchase and credit history
-- **Secure Login**: Simple admission number-based authentication
+- **Class-Based Access**: Secure access with class-specific codes (S1, S2, D1, D3)
 - **Real-time Updates**: Live balance and transaction updates
 
 ### For Administrators
 - **Student Management**: Add, edit, and delete student accounts
+- **CSV Import**: Bulk import students with downloadable template
 - **Transaction Management**: Add credits/debits with detailed reasons
 - **Search & Filter**: Find students quickly by name, admission number, or class
 - **Real-time Dashboard**: Monitor all transactions and balances
@@ -109,11 +110,21 @@ The project includes a `vercel.json` configuration for proper SPA routing.
 3. Manage students and transactions
 
 ### Sample Data
-The system comes with 8 sample students across 4 classes:
-- Class 1: John Doe (ADM001), Jane Smith (ADM002)
-- Class 2: Mike Johnson (ADM003), Sarah Wilson (ADM004)
-- Class 3: David Brown (ADM005), Lisa Davis (ADM006)
-- Class 4: Tom Anderson (ADM007), Emma Taylor (ADM008)
+The system supports 4 classes with specific access codes:
+- **S1** (Code: S1001): First year students
+- **S2** (Code: S2002): Second year students  
+- **D1** (Code: D1003): Diploma first year
+- **D3** (Code: D3004): Diploma third year
+
+### CSV Import Format
+The CSV import feature accepts files with the following format:
+```csv
+name,admission_number,class,balance
+John Doe,ADM001,S1,1000
+Jane Smith,ADM002,S2,1500
+Mike Johnson,ADM003,D1,2000
+Sarah Wilson,ADM004,D3,500
+```
 
 ## Security Features
 

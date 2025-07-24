@@ -11,7 +11,7 @@ export default function HomePage({ onCheckBalance }: HomePageProps) {
     {
       icon: <CreditCard className="h-6 w-6" />,
       title: "Manage Wallet Balances",
-      description: "Easy balance management for all students"
+      description: "Easy balance management for all students across S1, S2, D1, D3"
     },
     {
       icon: <History className="h-6 w-6" />,
@@ -20,24 +20,18 @@ export default function HomePage({ onCheckBalance }: HomePageProps) {
     },
     {
       icon: <Shield className="h-6 w-6" />,
-      title: "Fast & Secure Login",
-      description: "Secure access with admission number verification"
+      title: "Class Code Access",
+      description: "Secure access with class-specific codes and admission numbers"
     },
     {
       icon: <Users className="h-6 w-6" />,
       title: "Admin Panel Control",
-      description: "Full control over student accounts and transactions"
+      description: "Full control with CSV import and bulk management"
     }
   ]
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Connection Status */}
-      <ConnectionStatus />
-
-      {/* Connection Status */}
-      <ConnectionStatus />
-
       {/* Hero Section */}
       <div className="text-center mb-16">
         <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
@@ -90,16 +84,16 @@ export default function HomePage({ onCheckBalance }: HomePageProps) {
             <p className="text-lg text-gray-600 mb-6 leading-relaxed">
               ASOSTORE is built specifically for college campuses to manage student store spending digitally. 
               Our system provides a seamless way for students to make purchases without cash while giving 
-              administrators complete control over account management.
+              administrators complete control over account management across all classes (S1, S2, D1, D3).
             </p>
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <CheckCircle className="h-5 w-5 text-green-500" />
-                <span className="text-gray-700">Works across all 4 student classes</span>
+                <span className="text-gray-700">Works across all classes: S1, S2, D1, D3</span>
               </div>
               <div className="flex items-center space-x-3">
                 <CheckCircle className="h-5 w-5 text-green-500" />
-                <span className="text-gray-700">Unique admission number identification</span>
+                <span className="text-gray-700">Class-specific code and admission number system</span>
               </div>
               <div className="flex items-center space-x-3">
                 <CheckCircle className="h-5 w-5 text-green-500" />
@@ -107,7 +101,7 @@ export default function HomePage({ onCheckBalance }: HomePageProps) {
               </div>
               <div className="flex items-center space-x-3">
                 <CheckCircle className="h-5 w-5 text-green-500" />
-                <span className="text-gray-700">Secure admin management panel</span>
+                <span className="text-gray-700">CSV import and bulk student management</span>
               </div>
             </div>
           </div>
