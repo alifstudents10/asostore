@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, Plus, Edit3, CreditCard, Users, Search, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Plus, Edit3, CreditCard, Users, Search, RefreshCw, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import type { Student, Transaction } from '../types/database'
 import ConnectionStatus from './ConnectionStatus'
@@ -19,6 +19,7 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
   const [showTransactionModal, setShowTransactionModal] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null)
   const [editingStudent, setEditingStudent] = useState<Student | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<Student | null>(null)
 
   // Form states
   const [studentForm, setStudentForm] = useState({
@@ -164,6 +165,21 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
       setTransactionForm({ amount: 0, type: 'credit', reason: '' })
       loadStudents()
       loadTransactions()
+    }
+  }
+
+  const handleDeleteStudent = async (student: Student) => {
+    const { error } = await supabase
+      .from('students')
+      .delete()
+      .eq('id', student.id)
+
+    if (!error) {
+      setShowDeleteConfirm(null)
+      loadStudents()
+      loadTransactions()
+    } else {
+      alert('Failed to delete student: ' + error.message)
     }
   }
 
@@ -394,7 +410,8 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 space-x-2">
                           <button
                             onClick={() => startEditStudent(student)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-blue-600 hover:text-blue-900 p-1"
+                            title="Edit Student"
                           >
                             <Edit3 className="h-4 w-4" />
                           </button>
@@ -403,9 +420,17 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                               setSelectedStudent(student)
                               setShowTransactionModal(true)
                             }}
-                            className="text-green-600 hover:text-green-900"
+                            className="text-green-600 hover:text-green-900 p-1"
+                            title="Add Transaction"
                           >
                             <CreditCard className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => setShowDeleteConfirm(student)}
+                            className="text-red-600 hover:text-red-900 p-1"
+                            title="Delete Student"
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </button>
                         </td>
                       </tr>
@@ -676,6 +701,38 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+            <div className="text-center">
+              <div className="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="h-8 w-8 text-red-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Delete Student</h3>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to delete <strong>{showDeleteConfirm.name}</strong>? 
+                This action cannot be undone and will also delete all associated transactions.
+              </p>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(null)}
+                  className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteStudent(showDeleteConfirm)}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors"
+                >
+                  Delete Student
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

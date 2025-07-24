@@ -15,7 +15,14 @@ export default function ConnectionStatus() {
       // Check if environment variables exist
       if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
         setStatus('error')
-        setError('Supabase environment variables not found. Please connect to Supabase.')
+        setError('Supabase environment variables not found. Please set up your Supabase connection.')
+        return
+      }
+
+      // Check if using placeholder values
+      if (import.meta.env.VITE_SUPABASE_URL === 'https://placeholder.supabase.co') {
+        setStatus('error')
+        setError('Supabase is not properly configured. Please set up your Supabase connection.')
         return
       }
 
@@ -58,9 +65,9 @@ export default function ConnectionStatus() {
         <div className="bg-red-100 border border-red-300 rounded p-3">
           <p className="text-red-800 text-sm font-medium mb-2">To fix this:</p>
           <ol className="text-red-700 text-sm space-y-1 list-decimal list-inside">
-            <li>Click the "Connect to Supabase" button in the top right corner</li>
-            <li>Create a new Supabase project or connect to an existing one</li>
-            <li>The database tables will be created automatically</li>
+            <li>Set up your Supabase project and get your URL and API key</li>
+            <li>Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your environment variables</li>
+            <li>Redeploy your application with the correct environment variables</li>
           </ol>
         </div>
         <button
