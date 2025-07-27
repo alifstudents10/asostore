@@ -4,6 +4,7 @@ export interface Student {
   name: string
   class: string
   balance: number
+  profile_image?: string
   created_at: string
   updated_at: string
 }

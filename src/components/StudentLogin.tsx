@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
-import { ArrowLeft, User, BookOpen, CreditCard, Clock, Plus, Minus } from 'lucide-react'
+import { ArrowLeft, User, BookOpen, CreditCard, Clock, Plus, Minus, Camera } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import type { StudentWithTransactions, Transaction } from '../types/database'
-import ConnectionStatus from './ConnectionStatus'
 
 interface StudentLoginProps {
   onBack: () => void
@@ -77,9 +76,9 @@ export default function StudentLogin({ onBack }: StudentLoginProps) {
   }
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'NGN'
+      currency: 'INR'
     }).format(amount)
   }
 
@@ -106,6 +105,21 @@ export default function StudentLogin({ onBack }: StudentLoginProps) {
 
         {/* Student Info Card */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <div className="flex items-center justify-center mb-6">
+            <div className="relative">
+              {student.profile_image ? (
+                <img
+                  src={student.profile_image}
+                  alt={student.name}
+                  className="w-24 h-24 rounded-full object-cover border-4 border-blue-100"
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center border-4 border-blue-100">
+                  <User className="h-12 w-12 text-gray-400" />
+                </div>
+              )}
+            </div>
+          </div>
           <div className="grid md:grid-cols-3 gap-6">
             <div className="flex items-center space-x-4">
               <div className="bg-blue-100 p-3 rounded-lg">
