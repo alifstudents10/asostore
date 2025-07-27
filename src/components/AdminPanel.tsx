@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, Plus, Search, Edit, Trash2, Users, CreditCard, TrendingUp, Download, Upload, Eye, X, Camera, User } from 'lucide-react'
+import { ArrowLeft, Plus, Search, Edit, Trash2, Users, CreditCard, TrendingUp, Download, Upload, Eye, X, Camera, User, BookOpen, Calculator } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import type { Student, Transaction } from '../types/database'
 
@@ -11,6 +11,11 @@ export default function StudentsPage({ onBack }: StudentsPageProps) {
   const [students, setStudents] = useState<Student[]>([])
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([])
   const [searchTerm, setSearchTerm] = useState('')
+  const [lookupMode, setLookupMode] = useState<'all' | 'student' | 'class'>('all')
+  const [lookupValue, setLookupValue] = useState('')
+  const [lookupResults, setLookupResults] = useState<Student[]>([])
+  const [showLookupResults, setShowLookupResults] = useState(false)
+  const [classBalances, setClassBalances] = useState<{[key: string]: {total: number, count: number, students: Student[]}}>({})
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
@@ -66,6 +71,68 @@ export default function StudentsPage({ onBack }: StudentsPageProps) {
       style: 'currency',
       currency: 'INR'
     }).format(amount)
+  }
+
+  const handleLookup = async () => {
+    if (!lookupValue.trim()) return
+    
+    setLoading(true)
+    try {
+      if (lookupMode === 'student') {
+        // Look up individual student by admission number
+        const { data, error } = await supabase
+          .from('students')
+          .select('*')
+          .eq('admission_number', lookupValue.trim())
+        
+        if (error) throw error
+        setLookupResults(data || [])
+        setShowLookupResults(true)
+      } else if (lookupMode === 'class') {
+        // Look up entire class
+        const validClasses = ['S1', 'S2', 'D1', 'D3']
+        const classCode = lookupValue.trim().toUpperCase()
+        
+        if (!validClasses.includes(classCode)) {
+          alert('Invalid class code. Valid classes are: S1, S2, D1, D3')
+          return
+        }
+        
+        const { data, error } = await supabase
+          .from('students')
+          .select('*')
+          .eq('class', classCode)
+          .order('name')
+        
+        if (error) throw error
+        setLookupResults(data || [])
+        setShowLookupResults(true)
+        
+        // Calculate class balance summary
+        if (data && data.length > 0) {
+          const totalBalance = data.reduce((sum, student) => sum + student.balance, 0)
+          setClassBalances({
+            [classCode]: {
+              total: totalBalance,
+              count: data.length,
+              students: data
+            }
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Error during lookup:', error)
+      alert('Lookup failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const resetLookup = () => {
+    setLookupValue('')
+    setLookupResults([])
+    setShowLookupResults(false)
+    setClassBalances({})
   }
 
   const resetForm = () => {
@@ -381,6 +448,99 @@ export default function StudentsPage({ onBack }: StudentsPageProps) {
         </div>
       </div>
 
+      {/* Lookup Section */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Student & Class Lookup</h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Lookup Type
+            </label>
+            <select
+              value={lookupMode}
+              onChange={(e) => {
+                setLookupMode(e.target.value as 'all' | 'student' | 'class')
+                resetLookup()
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">View All Students</option>
+              <option value="student">Individual Student</option>
+              <option value="class">Entire Class</option>
+            </select>
+          </div>
+          
+          {lookupMode !== 'all' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {lookupMode === 'student' ? 'Admission Number' : 'Class Code'}
+                </label>
+                <input
+                  type="text"
+                  value={lookupValue}
+                  onChange={(e) => setLookupValue(e.target.value)}
+                  placeholder={lookupMode === 'student' ? 'Enter admission number' : 'Enter class (S1, S2, D1, D3)'}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onKeyPress={(e) => e.key === 'Enter' && handleLookup()}
+                />
+              </div>
+              
+              <div className="flex items-end space-x-2">
+                <button
+                  onClick={handleLookup}
+                  disabled={loading || !lookupValue.trim()}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center"
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  {loading ? 'Searching...' : 'Lookup'}
+                </button>
+                
+                {showLookupResults && (
+                  <button
+                    onClick={resetLookup}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+        
+        {/* Class Balance Summary */}
+        {lookupMode === 'class' && Object.keys(classBalances).length > 0 && (
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            {Object.entries(classBalances).map(([className, data]) => (
+              <div key={className} className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-blue-100 p-2 rounded-lg">
+                    <BookOpen className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Class {className}</h3>
+                    <p className="text-sm text-gray-600">{data.count} students</p>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">Total Balance:</span>
+                  <span className={`text-lg font-bold ${data.total >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {formatCurrency(data.total)}
+                  </span>
+                </div>
+                <div className="mt-1 flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">Average Balance:</span>
+                  <span className="text-sm font-semibold text-gray-900">
+                    {formatCurrency(data.total / data.count)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-lg shadow">
@@ -415,124 +575,251 @@ export default function StudentsPage({ onBack }: StudentsPageProps) {
       </div>
 
       {/* Search */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-          <input
-            type="text"
-            placeholder="Search students by name, admission number, or class..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-      </div>
-
-      {/* Students Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Photo
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Admission Number
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Class
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Balance
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredStudents.map((student) => (
-                <tr key={student.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      {student.profile_image ? (
-                        <img
-                          src={student.profile_image}
-                          alt={student.name}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                          <User className="h-5 w-5 text-gray-400" />
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{student.name}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{student.admission_number}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{student.class}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className={`text-sm font-medium ${student.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatCurrency(student.balance)}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => {
-                          setSelectedStudent(student)
-                          setShowImageUpload(true)
-                        }}
-                        className="text-blue-600 hover:text-blue-900 p-1 rounded"
-                        title="Upload Image"
-                      >
-                        <Camera className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => openEditForm(student)}
-                        className="text-indigo-600 hover:text-indigo-900 p-1 rounded"
-                        title="Edit Student"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedStudent(student)
-                          setShowDeleteConfirm(true)
-                        }}
-                        className="text-red-600 hover:text-red-900 p-1 rounded"
-                        title="Delete Student"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {filteredStudents.length === 0 && (
-          <div className="text-center py-12">
-            <Users className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No students found</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {searchTerm ? 'Try adjusting your search terms.' : 'Get started by adding a new student.'}
-            </p>
+      {!showLookupResults && (
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <input
+              type="text"
+              placeholder="Search students by name, admission number, or class..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Lookup Results */}
+      {showLookupResults && (
+        <div className="bg-white shadow rounded-lg overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium text-gray-900">
+                {lookupMode === 'student' ? 'Student Details' : `Class ${lookupValue.toUpperCase()} Students`}
+              </h3>
+              <span className="text-sm text-gray-500">
+                {lookupResults.length} {lookupResults.length === 1 ? 'result' : 'results'} found
+              </span>
+            </div>
+          </div>
+          
+          {lookupResults.length === 0 ? (
+            <div className="text-center py-12">
+              <Search className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No results found</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                {lookupMode === 'student' 
+                  ? 'No student found with this admission number.' 
+                  : 'No students found in this class.'}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Photo
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Admission Number
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Class
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Balance
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {lookupResults.map((student) => (
+                    <tr key={student.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          {student.profile_image ? (
+                            <img
+                              src={student.profile_image}
+                              alt={student.name}
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                              <User className="h-5 w-5 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{student.name}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{student.admission_number}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{student.class}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className={`text-sm font-medium ${student.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {formatCurrency(student.balance)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => {
+                              setSelectedStudent(student)
+                              setShowImageUpload(true)
+                            }}
+                            className="text-blue-600 hover:text-blue-900 p-1 rounded"
+                            title="Upload Image"
+                          >
+                            <Camera className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => openEditForm(student)}
+                            className="text-indigo-600 hover:text-indigo-900 p-1 rounded"
+                            title="Edit Student"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedStudent(student)
+                              setShowDeleteConfirm(true)
+                            }}
+                            className="text-red-600 hover:text-red-900 p-1 rounded"
+                            title="Delete Student"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Regular Students Table - Only show when not in lookup mode */}
+      {!showLookupResults && (
+        <div className="relative">
+          <div className="bg-white shadow rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Photo
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Admission Number
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Class
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Balance
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredStudents.map((student) => (
+                    <tr key={student.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          {student.profile_image ? (
+                            <img
+                              src={student.profile_image}
+                              alt={student.name}
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                              <User className="h-5 w-5 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{student.name}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{student.admission_number}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{student.class}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className={`text-sm font-medium ${student.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {formatCurrency(student.balance)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => {
+                              setSelectedStudent(student)
+                              setShowImageUpload(true)
+                            }}
+                            className="text-blue-600 hover:text-blue-900 p-1 rounded"
+                            title="Upload Image"
+                          >
+                            <Camera className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => openEditForm(student)}
+                            className="text-indigo-600 hover:text-indigo-900 p-1 rounded"
+                            title="Edit Student"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedStudent(student)
+                              setShowDeleteConfirm(true)
+                            }}
+                            className="text-red-600 hover:text-red-900 p-1 rounded"
+                            title="Delete Student"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {filteredStudents.length === 0 && (
+              <div className="text-center py-12">
+                <Users className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">No students found</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {searchTerm ? 'Try adjusting your search terms.' : 'Get started by adding a new student.'}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Add Student Modal */}
       {showAddForm && (
