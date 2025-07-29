@@ -1,33 +1,31 @@
 import React from 'react'
-import { CreditCard, History, Shield, Users, ArrowRight, CheckCircle } from 'lucide-react'
-import ConnectionStatus from './ConnectionStatus'
+import { CreditCard, History, Shield, Users, ArrowRight, CheckCircle, Search } from 'lucide-react'
 
 interface HomePageProps {
   onCheckBalance: () => void
-  onStudentLogin: () => void
 }
 
-export default function HomePage({ onCheckBalance, onStudentLogin }: HomePageProps) {
+export default function HomePage({ onCheckBalance }: HomePageProps) {
   const features = [
     {
       icon: <CreditCard className="h-6 w-6" />,
-      title: "Manage Wallet Balances",
-      description: "Easy balance management for all students across S1, S2, D1, D3"
+      title: "Check Student Balances",
+      description: "Quick balance lookup by admission number or class code (S1, S2, D1, D3)"
     },
     {
       icon: <History className="h-6 w-6" />,
-      title: "Track Purchase History",
-      description: "Complete transaction history and records"
+      title: "Transaction Management",
+      description: "Complete transaction history with deposits and expenses tracking"
     },
     {
       icon: <Shield className="h-6 w-6" />,
-      title: "Class Code Access",
-      description: "Secure access with class-specific codes and admission numbers"
+      title: "Secure Admin Panel",
+      description: "Protected admin access for managing students and transactions"
     },
     {
       icon: <Users className="h-6 w-6" />,
-      title: "Admin Panel Control",
-      description: "Full control with CSV import and bulk management"
+      title: "Stock Management",
+      description: "Inventory tracking with purchase recording and profit calculation"
     }
   ]
 
@@ -39,21 +37,15 @@ export default function HomePage({ onCheckBalance, onStudentLogin }: HomePagePro
           Welcome to <span className="text-blue-600">ASOSTORE</span>
         </h1>
         <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-          Your Prepaid College Wallet – Sign in to view your balance, transaction history, and manage your account securely.
+          College Prepaid Fund Management System – Check student balances instantly or access the admin panel for complete management.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button
-            onClick={onStudentLogin}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-lg px-8 py-4 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center space-x-2 justify-center"
-          >
-            <span>Student Login</span>
-            <ArrowRight className="h-5 w-5" />
-          </button>
+        <div className="flex justify-center">
           <button
             onClick={onCheckBalance}
-            className="bg-gray-600 hover:bg-gray-700 text-white text-lg px-8 py-4 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center space-x-2 justify-center"
+            className="bg-blue-600 hover:bg-blue-700 text-white text-lg px-8 py-4 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center space-x-2 justify-center"
           >
-            <span>Quick Balance Check</span>
+            <Search className="h-5 w-5" />
+            <span>Check Balance</span>
             <ArrowRight className="h-5 w-5" />
           </button>
         </div>
@@ -92,26 +84,26 @@ export default function HomePage({ onCheckBalance, onStudentLogin }: HomePagePro
         <div className="grid md:grid-cols-2 gap-8 items-center">
           <div>
             <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-              ASOSTORE is built specifically for college campuses to manage student store spending digitally. 
-              Our system provides a seamless way for students to make purchases without cash while giving 
-              administrators complete control over account management across all classes (S1, S2, D1, D3).
+              ASOSTORE is a comprehensive prepaid fund management system designed for colleges. 
+              Students can quickly check their balances using admission numbers or class codes, 
+              while administrators have complete control over transactions, stock management, and reporting.
             </p>
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <CheckCircle className="h-5 w-5 text-green-500" />
-                <span className="text-gray-700">Works across all classes: S1, S2, D1, D3</span>
+                <span className="text-gray-700">Balance checking by admission number or class code</span>
               </div>
               <div className="flex items-center space-x-3">
                 <CheckCircle className="h-5 w-5 text-green-500" />
-                <span className="text-gray-700">Class-specific code and admission number system</span>
+                <span className="text-gray-700">Complete transaction management system</span>
               </div>
               <div className="flex items-center space-x-3">
                 <CheckCircle className="h-5 w-5 text-green-500" />
-                <span className="text-gray-700">Real-time balance tracking</span>
+                <span className="text-gray-700">Stock management with profit tracking</span>
               </div>
               <div className="flex items-center space-x-3">
                 <CheckCircle className="h-5 w-5 text-green-500" />
-                <span className="text-gray-700">CSV import and bulk student management</span>
+                <span className="text-gray-700">Excel export and comprehensive reporting</span>
               </div>
             </div>
           </div>
@@ -121,10 +113,10 @@ export default function HomePage({ onCheckBalance, onStudentLogin }: HomePagePro
                 <CreditCard className="h-8 w-8 text-white" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Digital Wallet System
+                Prepaid Fund System
               </h3>
               <p className="text-gray-600">
-                Modern, cashless solution for campus stores
+                Modern fund management for college campuses
               </p>
             </div>
           </div>
@@ -137,10 +129,10 @@ export default function HomePage({ onCheckBalance, onStudentLogin }: HomePagePro
           Need Help?
         </h2>
         <p className="text-xl text-gray-300 mb-4">
-          For login issues, balance top-ups, or account support
+          For balance inquiries, fund deposits, or system support
         </p>
         <p className="text-lg text-gray-400">
-          Contact your class teacher or system administrator
+          Contact your college administration or system administrator
         </p>
       </div>
     </div>

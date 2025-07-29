@@ -1,12 +1,12 @@
 export interface Student {
   id: string
-  user_id?: string
-  admission_number: string
   name: string
-  class: string
+  admission_no: string
+  class_code: 'S1' | 'S2' | 'D1' | 'D3'
   balance: number
   total_paid: number
   total_spent: number
+  last_payment?: string
   created_at: string
   updated_at: string
 }
@@ -14,17 +14,19 @@ export interface Student {
 export interface Transaction {
   id: string
   student_id: string
+  amount: number
   type: 'deposit' | 'expense'
   method: 'online' | 'bycash' | 'credit'
-  amount: number
-  description?: string
+  item_name?: string
+  note?: string
   admin_id?: string
   created_at: string
+  student?: Student
 }
 
 export interface StockItem {
   id: string
-  name: string
+  item_name: string
   quantity: number
   cost_price: number
   selling_price: number
@@ -39,23 +41,31 @@ export interface Purchase {
   quantity: number
   unit_price: number
   total_price: number
+  profit: number
   created_at: string
-  item?: StockItem
   student?: Student
+  item?: StockItem
 }
 
 export interface UserRole {
   id: string
   user_id: string
-  role: 'admin' | 'student'
+  role: 'admin'
   created_at: string
 }
 
 export interface DashboardStats {
+  totalStudents: number
   totalDeposits: number
   totalExpenses: number
+  netProfit: number
   totalStockValue: number
-  totalProfit: number
-  totalStudents: number
   recentTransactions: Transaction[]
+}
+
+export interface BalanceCheckResult {
+  type: 'student' | 'class'
+  student?: Student
+  students?: Student[]
+  classCode?: string
 }
