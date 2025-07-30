@@ -49,6 +49,7 @@ function App() {
         return (
           <HomePage 
             onCheckBalance={() => setCurrentView('balance-check')}
+            onAdminLogin={() => setCurrentView('admin-auth')}
           />
         )
     }
@@ -69,6 +70,12 @@ function App() {
                     className="text-blue-600 hover:text-blue-700 font-medium"
                   >
                     Admin Dashboard
+                  </button>
+                  <button
+                    onClick={() => setCurrentView('home')}
+                    className="text-gray-600 hover:text-gray-700 font-medium"
+                  >
+                    Home
                   </button>
                 </div>
                 <div className="flex items-center space-x-4">
@@ -96,7 +103,7 @@ function App() {
               onClick={() => setCurrentView('admin-auth')}
               className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center space-x-2"
             >
-              <span>Admin Login</span>
+              <span>Admin Panel</span>
             </button>
           </div>
         )}

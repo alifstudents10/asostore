@@ -3,9 +3,10 @@ import { CreditCard, History, Shield, Users, ArrowRight, CheckCircle, Search } f
 
 interface HomePageProps {
   onCheckBalance: () => void
+  onAdminLogin: () => void
 }
 
-export default function HomePage({ onCheckBalance }: HomePageProps) {
+export default function HomePage({ onCheckBalance, onAdminLogin }: HomePageProps) {
   const features = [
     {
       icon: <CreditCard className="h-6 w-6" />,
@@ -126,14 +127,18 @@ export default function HomePage({ onCheckBalance }: HomePageProps) {
       {/* Contact Section */}
       <div className="bg-gray-900 text-white rounded-2xl p-8 md:p-12 text-center">
         <h2 className="text-3xl font-bold mb-6">
-          Need Help?
+          Administration
         </h2>
         <p className="text-xl text-gray-300 mb-4">
-          For balance inquiries, fund deposits, or system support
+          Admin access for managing students, transactions, and inventory
         </p>
-        <p className="text-lg text-gray-400">
-          Contact your college administration or system administrator
-        </p>
+        <button
+          onClick={onAdminLogin}
+          className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 flex items-center space-x-2 mx-auto"
+        >
+          <Shield className="h-5 w-5" />
+          <span>Admin Login</span>
+        </button>
       </div>
     </div>
   )
