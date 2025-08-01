@@ -1,6 +1,6 @@
 import React from 'react'
 import { useAuth } from '../hooks/useAuth'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Shield } from 'lucide-react'
 
 interface AuthWrapperProps {
   children: React.ReactNode
@@ -30,6 +30,7 @@ export default function AuthWrapper({
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
+          <Shield className="h-12 w-12 mx-auto mb-4 text-gray-400" />
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Authentication Required</h2>
           <p className="text-gray-600">Please sign in to access this page.</p>
         </div>
@@ -41,6 +42,7 @@ export default function AuthWrapper({
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
+          <Shield className="h-12 w-12 mx-auto mb-4 text-red-400" />
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Admin Access Required</h2>
           <p className="text-gray-600">You don't have permission to access this page.</p>
         </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
-import { LogIn, Shield, ArrowLeft } from 'lucide-react'
+import { LogIn, Shield, ArrowLeft, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 interface AuthLoginProps {
@@ -20,16 +20,20 @@ export default function AuthLogin({ onBack }: AuthLoginProps) {
     setLoading(true)
 
     try {
+      console.log('🔄 Attempting to sign in:', formData.email)
+      
       const { error } = await signIn(formData.email, formData.password)
       
       if (error) {
+        console.error('❌ Sign in error:', error.message)
         toast.error(error.message)
         return
       }
 
+      console.log('✅ Sign in successful!')
       toast.success('Signed in successfully!')
     } catch (err) {
-      console.error('Auth error:', err)
+      console.error('❌ Auth error:', err)
       toast.error('An error occurred. Please try again.')
     } finally {
       setLoading(false)
@@ -68,6 +72,7 @@ export default function AuthLogin({ onBack }: AuthLoginProps) {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Enter your email"
               required
+              disabled={loading}
             />
           </div>
 
@@ -83,6 +88,7 @@ export default function AuthLogin({ onBack }: AuthLoginProps) {
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Enter your password"
               required
+              disabled={loading}
             />
           </div>
 
@@ -92,13 +98,11 @@ export default function AuthLogin({ onBack }: AuthLoginProps) {
             className="w-full bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white py-3 px-4 rounded-lg font-semibold transition-colors text-lg flex items-center justify-center space-x-2"
           >
             {loading ? (
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
-              <>
-                <LogIn className="h-5 w-5" />
-                <span>Sign In</span>
-              </>
+              <LogIn className="h-5 w-5" />
             )}
+            <span>{loading ? 'Signing In...' : 'Sign In'}</span>
           </button>
         </form>
 

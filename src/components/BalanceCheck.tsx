@@ -1,11 +1,18 @@
 import React, { useState } from 'react'
-import { Search, User, Users, CreditCard, TrendingUp, TrendingDown, ArrowLeft } from 'lucide-react'
+import { Search, User, Users, CreditCard, TrendingUp, TrendingDown, ArrowLeft, Loader2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { Student, BalanceCheckResult } from '../types/database'
+import { Student } from '../types/database'
 import toast from 'react-hot-toast'
 
 interface BalanceCheckProps {
   onBack: () => void
+}
+
+interface BalanceCheckResult {
+  type: 'student' | 'class'
+  student?: Student
+  students?: Student[]
+  classCode?: string
 }
 
 export default function BalanceCheck({ onBack }: BalanceCheckProps) {
@@ -40,23 +47,30 @@ export default function BalanceCheck({ onBack }: BalanceCheckProps) {
 
     try {
       const trimmedValue = searchValue.trim().toUpperCase()
+      console.log('🔍 Searching for:', trimmedValue)
       
       // Check if it's a class code
       if (['S1', 'S2', 'D1', 'D3'].includes(trimmedValue)) {
-        const { data: students, error, count } = await supabase
+        console.log('🔍 Searching by class code:', trimmedValue)
+        
+        const { data: students, error } = await supabase
           .from('students')
           .select('*')
           .eq('class_code', trimmedValue)
           .order('name')
-          .limit(100) // Limit results for performance
 
-        if (error) throw error
+        if (error) {
+          console.error('❌ Class search error:', error.message)
+          toast.error('Error searching for class. Please try again.')
+          return
+        }
 
         if (!students || students.length === 0) {
           toast.error(`No students found in class ${trimmedValue}`)
           return
         }
 
+        console.log('✅ Found', students.length, 'students in class', trimmedValue)
         setResult({
           type: 'class',
           students,
@@ -64,15 +78,16 @@ export default function BalanceCheck({ onBack }: BalanceCheckProps) {
         })
       } else {
         // Search by admission number
+        console.log('🔍 Searching by admission number:', trimmedValue)
+        
         const { data: students, error } = await supabase
           .from('students')
           .select('*')
           .eq('admission_no', trimmedValue)
-          .limit(1)
 
         if (error) {
-          console.error('Search error:', error)
-          toast.error('Student not found. Please check the admission number.')
+          console.error('❌ Student search error:', error.message)
+          toast.error('Error searching for student. Please try again.')
           return
         }
 
@@ -81,13 +96,14 @@ export default function BalanceCheck({ onBack }: BalanceCheckProps) {
           return
         }
 
+        console.log('✅ Found student:', students[0].name)
         setResult({
           type: 'student',
           student: students[0]
         })
       }
     } catch (err) {
-      console.error('Search error:', err)
+      console.error('❌ Search error:', err)
       toast.error('Search failed. Please try again.')
     } finally {
       setLoading(false)
@@ -183,6 +199,7 @@ export default function BalanceCheck({ onBack }: BalanceCheckProps) {
               className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
               placeholder="Enter admission number or class code"
               required
+              disabled={loading}
             />
             <button
               type="submit"
@@ -190,7 +207,7 @@ export default function BalanceCheck({ onBack }: BalanceCheckProps) {
               className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2"
             >
               {loading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
                 <Search className="h-5 w-5" />
               )}

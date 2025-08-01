@@ -1,5 +1,6 @@
 import React from 'react'
 import { Wallet, GraduationCap } from 'lucide-react'
+import DatabaseStatus from './DatabaseStatus'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -20,7 +21,10 @@ export default function Layout({ children }: LayoutProps) {
                 <p className="text-sm text-gray-600">College Prepaid Wallet</p>
               </div>
             </div>
-            <GraduationCap className="h-8 w-8 text-blue-600" />
+            <div className="flex items-center space-x-4">
+              <DatabaseStatus />
+              <GraduationCap className="h-8 w-8 text-blue-600" />
+            </div>
           </div>
         </div>
       </header>

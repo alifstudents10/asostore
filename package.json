@@ -1,7 +1,7 @@
 {
-  "name": "vite-react-typescript-starter",
+  "name": "asostore-fresh",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,16 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@supabase/storage-js": "^2.10.2",
-    "@supabase/supabase-js": "^2.52.0",
-    "@types/papaparse": "^5.3.16",
+    "@supabase/supabase-js": "^2.39.0",
     "lucide-react": "^0.344.0",
-    "papaparse": "^5.5.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-hot-toast": "^2.5.2",
-    "react-router-dom": "^7.7.0",
-    "xlsx": "^0.18.5"
+    "react-hot-toast": "^2.4.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

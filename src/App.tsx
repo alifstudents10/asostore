@@ -18,11 +18,13 @@ function App() {
   // Auto-redirect authenticated admin users to dashboard
   React.useEffect(() => {
     if (user && isAdmin && currentView === 'home') {
+      console.log('🔄 Auto-redirecting admin to dashboard')
       setCurrentView('admin-dashboard')
     }
   }, [user, isAdmin, currentView])
 
   const handleSignOut = async () => {
+    console.log('🔄 Signing out and returning to home')
     await signOut()
     setCurrentView('home')
   }
@@ -57,7 +59,31 @@ function App() {
 
   return (
     <Layout>
-      <Toaster position="top-right" />
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 3000,
+            iconTheme: {
+              primary: '#4ade80',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            duration: 5000,
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
+      
       <div className="min-h-screen">
         {/* Header with auth controls */}
         {user && isAdmin && (
@@ -67,13 +93,21 @@ function App() {
                 <div className="flex items-center space-x-4">
                   <button
                     onClick={() => setCurrentView('admin-dashboard')}
-                    className="text-blue-600 hover:text-blue-700 font-medium"
+                    className={`font-medium transition-colors ${
+                      currentView === 'admin-dashboard' 
+                        ? 'text-blue-600' 
+                        : 'text-gray-600 hover:text-gray-700'
+                    }`}
                   >
                     Admin Dashboard
                   </button>
                   <button
                     onClick={() => setCurrentView('home')}
-                    className="text-gray-600 hover:text-gray-700 font-medium"
+                    className={`font-medium transition-colors ${
+                      currentView === 'home' 
+                        ? 'text-blue-600' 
+                        : 'text-gray-600 hover:text-gray-700'
+                    }`}
                   >
                     Home
                   </button>
@@ -84,7 +118,7 @@ function App() {
                   </span>
                   <button
                     onClick={handleSignOut}
-                    className="text-red-600 hover:text-red-700 font-medium"
+                    className="text-red-600 hover:text-red-700 font-medium transition-colors"
                   >
                     Sign Out
                   </button>
@@ -103,6 +137,7 @@ function App() {
               onClick={() => setCurrentView('admin-auth')}
               className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center space-x-2"
             >
+              <Shield className="h-5 w-5" />
               <span>Admin Panel</span>
             </button>
           </div>

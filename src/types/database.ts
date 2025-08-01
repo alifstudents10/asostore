@@ -62,10 +62,3 @@ export interface DashboardStats {
   totalStockValue: number
   recentTransactions: Transaction[]
 }
-
-export interface BalanceCheckResult {
-  type: 'student' | 'class'
-  student?: Student
-  students?: Student[]
-  classCode?: string
-}

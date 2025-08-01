@@ -4,7 +4,7 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables. Please check your .env file.')
+  throw new Error('Missing Supabase environment variables')
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -12,33 +12,31 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true
-  },
-  db: {
-    schema: 'public'
-  },
-  global: {
-    headers: {
-      'x-my-custom-header': 'asostore-app'
-    }
   }
 })
 
-// Test connection function
-export const testConnection = async () => {
+// Database connection test
+export const testDatabaseConnection = async () => {
   try {
-    const { data, error } = await supabase
+    console.log('🔄 Testing database connection...')
+    
+    const { data, error, count } = await supabase
       .from('students')
-      .select('count', { count: 'exact', head: true })
+      .select('*', { count: 'exact', head: true })
     
     if (error) {
-      console.error('Connection test failed:', error)
-      return false
+      console.error('❌ Database connection failed:', error.message)
+      return { success: false, error: error.message }
     }
     
-    console.log('Database connection successful')
-    return true
+    console.log('✅ Database connected successfully!')
+    console.log(`📊 Found ${count} students in database`)
+    return { success: true, count }
   } catch (err) {
-    console.error('Connection error:', err)
-    return false
+    console.error('❌ Connection test error:', err)
+    return { success: false, error: 'Failed to connect to database' }
   }
 }
+
+// Initialize connection test
+testDatabaseConnection()
