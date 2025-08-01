@@ -37,19 +37,23 @@ export function useAuth() {
 
   const fetchUserRole = async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from('user_roles')
         .select('*')
         .eq('user_id', userId)
-        .single()
+        .limit(1)
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error fetching user role:', error)
+        setUserRole(null)
+        setLoading(false)
+        return
       }
 
-      setUserRole(data || null)
+      setUserRole(data && data.length > 0 ? data[0] : null)
     } catch (err) {
       console.error('Error fetching user role:', err)
+      setUserRole(null)
     } finally {
       setLoading(false)
     }

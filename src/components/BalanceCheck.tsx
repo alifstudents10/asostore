@@ -43,11 +43,12 @@ export default function BalanceCheck({ onBack }: BalanceCheckProps) {
       
       // Check if it's a class code
       if (['S1', 'S2', 'D1', 'D3'].includes(trimmedValue)) {
-        const { data: students, error } = await supabase
+        const { data: students, error, count } = await supabase
           .from('students')
           .select('*')
           .eq('class_code', trimmedValue)
           .order('name')
+          .limit(100) // Limit results for performance
 
         if (error) throw error
 
@@ -63,29 +64,31 @@ export default function BalanceCheck({ onBack }: BalanceCheckProps) {
         })
       } else {
         // Search by admission number
-        const { data: student, error } = await supabase
+        const { data: students, error } = await supabase
           .from('students')
           .select('*')
           .eq('admission_no', trimmedValue)
-          .single()
+          .limit(1)
 
         if (error) {
-          if (error.code === 'PGRST116') {
-            toast.error('Student not found. Please check the admission number.')
-          } else {
-            throw error
-          }
+          console.error('Search error:', error)
+          toast.error('Student not found. Please check the admission number.')
+          return
+        }
+
+        if (!students || students.length === 0) {
+          toast.error('Student not found. Please check the admission number.')
           return
         }
 
         setResult({
           type: 'student',
-          student
+          student: students[0]
         })
       }
     } catch (err) {
       console.error('Search error:', err)
-      toast.error('An error occurred while searching')
+      toast.error('Search failed. Please try again.')
     } finally {
       setLoading(false)
     }

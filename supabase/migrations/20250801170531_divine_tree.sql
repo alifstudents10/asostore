@@ -1,47 +1,30 @@
 /*
-  # Improved Database Structure for ASOSTORE
+  # Fresh Database Migration - Optimized Structure
 
-  1. New Tables
-    - `students` - Student information with balances
-    - `transactions` - All financial transactions
-    - `stock_items` - Inventory management
-    - `purchases` - Purchase records with profit tracking
-    - `user_roles` - Admin role management
+  1. Drop all existing tables
+  2. Create clean, optimized tables with proper indexes
+  3. Add Row Level Security policies
+  4. Create database functions and triggers
+  5. Insert sample data for testing
 
-  2. Security
-    - Enable RLS on all tables
-    - Add policies for admin access and public balance checking
-    - Add database functions for automatic balance updates
-
-  3. Features
-    - Automatic balance calculation triggers
-    - Profit calculation for purchases
-    - Comprehensive audit trail
+  This migration creates a fresh, fast database structure.
 */
 
--- Drop existing tables if they exist
+-- Drop all existing tables and functions
 DROP TABLE IF EXISTS purchases CASCADE;
 DROP TABLE IF EXISTS transactions CASCADE;
 DROP TABLE IF EXISTS stock_items CASCADE;
 DROP TABLE IF EXISTS students CASCADE;
 DROP TABLE IF EXISTS user_roles CASCADE;
+DROP TABLE IF EXISTS kv_store_691b1fda CASCADE;
 
--- Drop existing functions
+-- Drop functions if they exist
 DROP FUNCTION IF EXISTS update_student_balance() CASCADE;
 DROP FUNCTION IF EXISTS process_purchase() CASCADE;
 DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
 
--- Create updated_at function
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = now();
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
-
--- Students table
-CREATE TABLE IF NOT EXISTS students (
+-- Create students table
+CREATE TABLE students (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
   admission_no text UNIQUE NOT NULL,
@@ -54,8 +37,8 @@ CREATE TABLE IF NOT EXISTS students (
   updated_at timestamptz DEFAULT now()
 );
 
--- Transactions table
-CREATE TABLE IF NOT EXISTS transactions (
+-- Create transactions table
+CREATE TABLE transactions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id uuid REFERENCES students(id) ON DELETE CASCADE,
   amount numeric NOT NULL CHECK (amount > 0),
@@ -67,8 +50,8 @@ CREATE TABLE IF NOT EXISTS transactions (
   created_at timestamptz DEFAULT now()
 );
 
--- Stock items table
-CREATE TABLE IF NOT EXISTS stock_items (
+-- Create stock_items table
+CREATE TABLE stock_items (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   item_name text NOT NULL,
   quantity integer NOT NULL DEFAULT 0 CHECK (quantity >= 0),
@@ -78,20 +61,20 @@ CREATE TABLE IF NOT EXISTS stock_items (
   updated_at timestamptz DEFAULT now()
 );
 
--- Purchases table
-CREATE TABLE IF NOT EXISTS purchases (
+-- Create purchases table
+CREATE TABLE purchases (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id uuid REFERENCES students(id) ON DELETE CASCADE,
   item_id uuid REFERENCES stock_items(id) ON DELETE CASCADE,
   quantity integer NOT NULL CHECK (quantity > 0),
   unit_price numeric NOT NULL CHECK (unit_price >= 0),
   total_price numeric NOT NULL CHECK (total_price >= 0),
-  profit numeric DEFAULT 0 NOT NULL,
+  profit numeric NOT NULL DEFAULT 0,
   created_at timestamptz DEFAULT now()
 );
 
--- User roles table
-CREATE TABLE IF NOT EXISTS user_roles (
+-- Create user_roles table
+CREATE TABLE user_roles (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
   role text NOT NULL DEFAULT 'admin' CHECK (role = 'admin'),
@@ -99,14 +82,14 @@ CREATE TABLE IF NOT EXISTS user_roles (
 );
 
 -- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_students_admission_no ON students(admission_no);
-CREATE INDEX IF NOT EXISTS idx_students_class_code ON students(class_code);
-CREATE INDEX IF NOT EXISTS idx_transactions_student_id ON transactions(student_id);
-CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON transactions(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_purchases_student_id ON purchases(student_id);
-CREATE INDEX IF NOT EXISTS idx_purchases_item_id ON purchases(item_id);
-CREATE INDEX IF NOT EXISTS idx_purchases_created_at ON purchases(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON user_roles(user_id);
+CREATE INDEX idx_students_admission_no ON students(admission_no);
+CREATE INDEX idx_students_class_code ON students(class_code);
+CREATE INDEX idx_transactions_student_id ON transactions(student_id);
+CREATE INDEX idx_transactions_created_at ON transactions(created_at DESC);
+CREATE INDEX idx_purchases_student_id ON purchases(student_id);
+CREATE INDEX idx_purchases_item_id ON purchases(item_id);
+CREATE INDEX idx_purchases_created_at ON purchases(created_at DESC);
+CREATE INDEX idx_user_roles_user_id ON user_roles(user_id);
 
 -- Enable Row Level Security
 ALTER TABLE students ENABLE ROW LEVEL SECURITY;
@@ -115,16 +98,14 @@ ALTER TABLE stock_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE purchases ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies for students (public can view for balance checking)
+-- RLS Policies for students (public can read for balance checking)
 CREATE POLICY "Public can view students for balance checking"
-  ON students
-  FOR SELECT
+  ON students FOR SELECT
   TO public
   USING (true);
 
 CREATE POLICY "Admins can manage students"
-  ON students
-  FOR ALL
+  ON students FOR ALL
   TO authenticated
   USING (
     EXISTS (
@@ -135,8 +116,7 @@ CREATE POLICY "Admins can manage students"
 
 -- RLS Policies for transactions (admin only)
 CREATE POLICY "Admins can manage transactions"
-  ON transactions
-  FOR ALL
+  ON transactions FOR ALL
   TO authenticated
   USING (
     EXISTS (
@@ -147,8 +127,7 @@ CREATE POLICY "Admins can manage transactions"
 
 -- RLS Policies for stock_items (admin only)
 CREATE POLICY "Admins can manage stock items"
-  ON stock_items
-  FOR ALL
+  ON stock_items FOR ALL
   TO authenticated
   USING (
     EXISTS (
@@ -159,8 +138,7 @@ CREATE POLICY "Admins can manage stock items"
 
 -- RLS Policies for purchases (admin only)
 CREATE POLICY "Admins can manage purchases"
-  ON purchases
-  FOR ALL
+  ON purchases FOR ALL
   TO authenticated
   USING (
     EXISTS (
@@ -171,8 +149,7 @@ CREATE POLICY "Admins can manage purchases"
 
 -- RLS Policies for user_roles
 CREATE POLICY "Admins can manage roles"
-  ON user_roles
-  FOR ALL
+  ON user_roles FOR ALL
   TO authenticated
   USING (
     EXISTS (
@@ -182,12 +159,20 @@ CREATE POLICY "Admins can manage roles"
   );
 
 CREATE POLICY "Admins can view roles"
-  ON user_roles
-  FOR SELECT
+  ON user_roles FOR SELECT
   TO authenticated
   USING (auth.uid() = user_id);
 
--- Function to update student balance after transaction
+-- Function to update updated_at column
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Function to update student balance
 CREATE OR REPLACE FUNCTION update_student_balance()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -210,9 +195,9 @@ BEGIN
   
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ language 'plpgsql';
 
--- Function to process purchase (update stock and student balance)
+-- Function to process purchase
 CREATE OR REPLACE FUNCTION process_purchase()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -243,19 +228,9 @@ BEGIN
   
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ language 'plpgsql';
 
 -- Create triggers
-CREATE TRIGGER trigger_update_student_balance
-  AFTER INSERT ON transactions
-  FOR EACH ROW
-  EXECUTE FUNCTION update_student_balance();
-
-CREATE TRIGGER trigger_process_purchase
-  BEFORE INSERT ON purchases
-  FOR EACH ROW
-  EXECUTE FUNCTION process_purchase();
-
 CREATE TRIGGER update_students_updated_at
   BEFORE UPDATE ON students
   FOR EACH ROW
@@ -266,17 +241,34 @@ CREATE TRIGGER update_stock_items_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
--- Insert sample data for testing
-INSERT INTO students (name, admission_no, class_code, balance, total_paid) VALUES
-  ('John Doe', 'S1001', 'S1', 1000, 1000),
-  ('Jane Smith', 'S1002', 'S1', 1500, 1500),
-  ('Mike Johnson', 'S2001', 'S2', 2000, 2000),
-  ('Sarah Wilson', 'D1001', 'D1', 500, 500),
-  ('David Brown', 'D3001', 'D3', 1200, 1200);
+CREATE TRIGGER trigger_update_student_balance
+  AFTER INSERT ON transactions
+  FOR EACH ROW
+  EXECUTE FUNCTION update_student_balance();
 
+CREATE TRIGGER trigger_process_purchase
+  BEFORE INSERT ON purchases
+  FOR EACH ROW
+  EXECUTE FUNCTION process_purchase();
+
+-- Insert sample data for testing
+INSERT INTO students (name, admission_no, class_code, balance, total_paid, total_spent) VALUES
+('John Doe', 'S1001', 'S1', 1500, 2000, 500),
+('Jane Smith', 'S1002', 'S1', 2300, 2500, 200),
+('Mike Johnson', 'S2001', 'S2', 800, 1200, 400),
+('Sarah Wilson', 'S2002', 'S2', 1900, 2000, 100),
+('David Brown', 'D1001', 'D1', 1200, 1500, 300),
+('Lisa Davis', 'D1002', 'D1', 2100, 2200, 100),
+('Tom Wilson', 'D3001', 'D3', 950, 1000, 50),
+('Amy Taylor', 'D3002', 'D3', 1750, 2000, 250);
+
+-- Insert sample stock items
 INSERT INTO stock_items (item_name, quantity, cost_price, selling_price) VALUES
-  ('Notebook', 100, 25, 35),
-  ('Pen', 200, 5, 10),
-  ('Pencil', 150, 3, 7),
-  ('Eraser', 80, 2, 5),
-  ('Ruler', 60, 8, 15);
+('Notebook', 50, 25, 35),
+('Pen', 100, 5, 10),
+('Pencil', 75, 3, 7),
+('Eraser', 60, 2, 5),
+('Ruler', 40, 8, 15),
+('Calculator', 20, 150, 200),
+('Water Bottle', 30, 50, 75),
+('Snacks', 80, 10, 20);

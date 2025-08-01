@@ -82,29 +82,49 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
 
   const fetchDashboardData = async () => {
     try {
+      setLoading(true)
+      
       // Fetch students
-      const { data: studentsData } = await supabase
+      const { data: studentsData, error: studentsError } = await supabase
         .from('students')
         .select('*')
         .order('created_at', { ascending: false })
+        .limit(1000) // Reasonable limit
+
+      if (studentsError) {
+        console.error('Error fetching students:', studentsError)
+        toast.error('Error loading students data')
+      }
 
       // Fetch transactions with student data
-      const { data: transactionsData } = await supabase
+      const { data: transactionsData, error: transactionsError } = await supabase
         .from('transactions')
         .select(`
           *,
           student:students(name, admission_no, class_code)
         `)
         .order('created_at', { ascending: false })
+        .limit(500) // Limit for performance
+
+      if (transactionsError) {
+        console.error('Error fetching transactions:', transactionsError)
+        toast.error('Error loading transactions data')
+      }
 
       // Fetch stock items
-      const { data: stockData } = await supabase
+      const { data: stockData, error: stockError } = await supabase
         .from('stock_items')
         .select('*')
         .order('item_name')
+        .limit(200)
+
+      if (stockError) {
+        console.error('Error fetching stock:', stockError)
+        toast.error('Error loading stock data')
+      }
 
       // Fetch purchases with related data
-      const { data: purchasesData } = await supabase
+      const { data: purchasesData, error: purchasesError } = await supabase
         .from('purchases')
         .select(`
           *,
@@ -112,6 +132,12 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
           item:stock_items(item_name, cost_price, selling_price)
         `)
         .order('created_at', { ascending: false })
+        .limit(300)
+
+      if (purchasesError) {
+        console.error('Error fetching purchases:', purchasesError)
+        toast.error('Error loading purchases data')
+      }
 
       setStudents(studentsData || [])
       setTransactions(transactionsData || [])
@@ -134,7 +160,7 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
       })
     } catch (err) {
       console.error('Error fetching dashboard data:', err)
-      toast.error('Error loading dashboard data')
+      toast.error('Failed to load dashboard data. Please refresh the page.')
     } finally {
       setLoading(false)
     }
