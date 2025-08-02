@@ -1,14 +1,16 @@
 import React, { useState } from 'react'
+import { Shield } from 'lucide-react'
 import { Toaster } from 'react-hot-toast'
 import Layout from './components/Layout'
 import HomePage from './components/HomePage'
 import BalanceCheck from './components/BalanceCheck'
 import AuthLogin from './components/AuthLogin'
 import AdminDashboard from './components/AdminDashboard'
+import StudentDashboard from './components/StudentDashboard'
 import AuthWrapper from './components/AuthWrapper'
 import { useAuth } from './hooks/useAuth'
 
-type ViewType = 'home' | 'balance-check' | 'admin-auth' | 'admin-dashboard'
+type ViewType = 'home' | 'balance-check' | 'admin-auth' | 'admin-dashboard' | 'student-auth' | 'student-dashboard'
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewType>('home')
@@ -17,9 +19,12 @@ function App() {
 
   // Auto-redirect authenticated admin users to dashboard
   React.useEffect(() => {
-    if (user && isAdmin && currentView === 'home') {
+    if (user && isAdmin && (currentView === 'home' || currentView === 'admin-auth')) {
       console.log('🔄 Auto-redirecting admin to dashboard')
       setCurrentView('admin-dashboard')
+    } else if (user && !isAdmin && (currentView === 'home' || currentView === 'student-auth')) {
+      console.log('🔄 Auto-redirecting student to dashboard')
+      setCurrentView('student-dashboard')
     }
   }, [user, isAdmin, currentView])
 
@@ -37,6 +42,9 @@ function App() {
       case 'admin-auth':
         return <AuthLogin onBack={() => setCurrentView('home')} />
       
+      case 'student-auth':
+        return <AuthLogin onBack={() => setCurrentView('home')} />
+      
       case 'admin-dashboard':
         return (
           <AuthWrapper requireAuth requireAdmin>
@@ -47,11 +55,19 @@ function App() {
           </AuthWrapper>
         )
       
+      case 'student-dashboard':
+        return (
+          <AuthWrapper requireAuth>
+            <StudentDashboard />
+          </AuthWrapper>
+        )
+      
       default:
         return (
           <HomePage 
             onCheckBalance={() => setCurrentView('balance-check')}
             onAdminLogin={() => setCurrentView('admin-auth')}
+            onStudentLogin={() => setCurrentView('student-auth')}
           />
         )
     }
@@ -101,6 +117,19 @@ function App() {
                   >
                     Admin Dashboard
                   </button>
+                ) : user && !isAdmin ? (
+                  <button
+                    onClick={() => setCurrentView('student-dashboard')}
+                    className={`font-medium transition-colors ${
+                      currentView === 'student-dashboard' 
+                        ? 'text-blue-600' 
+                        : 'text-gray-600 hover:text-gray-700'
+                    }`}
+                  >
+                    My Dashboard
+                  </button>
+                ) : null}
+                {user && (
                   <button
                     onClick={() => setCurrentView('home')}
                     className={`font-medium transition-colors ${
@@ -114,7 +143,7 @@ function App() {
                 </div>
                 <div className="flex items-center space-x-4">
                   <span className="text-sm text-gray-600">
-                    {user.email} (Admin)
+                    {user.email} {isAdmin ? '(Admin)' : '(Student)'}
                   </span>
                   <button
                     onClick={handleSignOut}

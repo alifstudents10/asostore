@@ -4,9 +4,10 @@ import { CreditCard, History, Shield, Users, ArrowRight, CheckCircle, Search } f
 interface HomePageProps {
   onCheckBalance: () => void
   onAdminLogin: () => void
+  onStudentLogin: () => void
 }
 
-export default function HomePage({ onCheckBalance, onAdminLogin }: HomePageProps) {
+export default function HomePage({ onCheckBalance, onAdminLogin, onStudentLogin }: HomePageProps) {
   const features = [
     {
       icon: <CreditCard className="h-6 w-6" />,
@@ -125,20 +126,40 @@ export default function HomePage({ onCheckBalance, onAdminLogin }: HomePageProps
       </div>
 
       {/* Contact Section */}
-      <div className="bg-gray-900 text-white rounded-2xl p-8 md:p-12 text-center">
+      <div className="grid md:grid-cols-2 gap-8">
+        {/* Student Login Section */}
+        <div className="bg-blue-600 text-white rounded-2xl p-8 text-center">
+          <h2 className="text-2xl font-bold mb-4">
+            Student Portal
+          </h2>
+          <p className="text-blue-100 mb-6">
+            Login to view your balance, transaction history, and purchase records
+          </p>
+          <button
+            onClick={onStudentLogin}
+            className="bg-white text-blue-600 hover:bg-blue-50 px-6 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 flex items-center space-x-2 mx-auto"
+          >
+            <Users className="h-5 w-5" />
+            <span>Student Login</span>
+          </button>
+        </div>
+
+        {/* Admin Login Section */}
+        <div className="bg-gray-900 text-white rounded-2xl p-8 text-center">
         <h2 className="text-3xl font-bold mb-6">
-          Administration
+            Admin Portal
         </h2>
-        <p className="text-xl text-gray-300 mb-4">
-          Admin access for managing students, transactions, and inventory
+          <p className="text-gray-300 mb-6">
+            Admin access for managing students, transactions, and inventory
         </p>
         <button
           onClick={onAdminLogin}
-          className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 flex items-center space-x-2 mx-auto"
+            className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 flex items-center space-x-2 mx-auto"
         >
           <Shield className="h-5 w-5" />
           <span>Admin Login</span>
         </button>
+        </div>
       </div>
     </div>
   )
