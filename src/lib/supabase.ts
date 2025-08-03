@@ -4,7 +4,8 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
+  console.error('❌ Missing Supabase environment variables')
+  console.error('Please check your .env file for VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY')
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -37,6 +38,3 @@ export const testDatabaseConnection = async () => {
     return { success: false, error: 'Failed to connect to database' }
   }
 }
-
-// Initialize connection test
-testDatabaseConnection()

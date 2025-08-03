@@ -9,6 +9,9 @@ export default function DatabaseStatus() {
 
   useEffect(() => {
     checkConnection()
+    // Set up periodic connection check
+    const interval = setInterval(checkConnection, 30000) // Check every 30 seconds
+    return () => clearInterval(interval)
   }, [])
 
   const checkConnection = async () => {
@@ -19,7 +22,7 @@ export default function DatabaseStatus() {
     
     if (result.success) {
       setStatus('connected')
-      setMessage('Database connected successfully!')
+      setMessage('Database connected')
       setStudentCount(result.count || 0)
     } else {
       setStatus('error')

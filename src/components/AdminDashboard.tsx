@@ -110,6 +110,7 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
     const { data, error } = await supabase
       .from('students')
       .select('*')
+      .limit(100)
       .order('name')
 
     if (error) {
@@ -128,6 +129,7 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
         *,
         student:students(name, admission_no)
       `)
+      .limit(200)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -143,6 +145,7 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
     const { data, error } = await supabase
       .from('stock_items')
       .select('*')
+      .limit(100)
       .order('item_name')
 
     if (error) {
@@ -162,6 +165,7 @@ export default function AdminDashboard({ activeTab, setActiveTab }: AdminDashboa
         student:students(name, admission_no),
         item:stock_items(item_name)
       `)
+      .limit(200)
       .order('created_at', { ascending: false })
 
     if (error) {

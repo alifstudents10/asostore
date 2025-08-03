@@ -57,6 +57,7 @@ export default function BalanceCheck({ onBack }: BalanceCheckProps) {
           .from('students')
           .select('*')
           .eq('class_code', trimmedValue)
+          .limit(50)
           .order('name')
 
         if (error) {
@@ -84,6 +85,7 @@ export default function BalanceCheck({ onBack }: BalanceCheckProps) {
           .from('students')
           .select('*')
           .eq('admission_no', trimmedValue)
+          .limit(1)
 
         if (error) {
           console.error('❌ Student search error:', error.message)

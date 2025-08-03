@@ -16,7 +16,7 @@ export function useAuth() {
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
         console.error('❌ Session error:', error.message)
-        toast.error('Authentication error')
+        console.log('ℹ️ No active session found')
       }
       
       setUser(session?.user ?? null)
