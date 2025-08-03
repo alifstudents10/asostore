@@ -16,20 +16,8 @@ export default function App() {
   const [currentView, setCurrentView] = useState<View>('home')
   const [activeTab, setActiveTab] = useState('overview')
 
-  // Show loading screen while auth is initializing
-  if (loading) {
-    return (
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading ASOSTORE...</p>
-          </div>
-        </div>
-        <Toaster position="top-right" />
-      </Layout>
-    )
-  }
+  // Don't show loading screen - let the app render immediately
+  // The individual components will handle their own loading states
 
   // Auto-redirect authenticated users
   React.useEffect(() => {

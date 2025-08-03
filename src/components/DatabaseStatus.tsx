@@ -1,32 +1,29 @@
 import React, { useState, useEffect } from 'react'
 import { Database, CheckCircle, XCircle, Loader2 } from 'lucide-react'
-import { testDatabaseConnection } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
 
 export default function DatabaseStatus() {
   const [status, setStatus] = useState<'connecting' | 'connected' | 'error'>('connecting')
-  const [message, setMessage] = useState('Connecting to database...')
   const [studentCount, setStudentCount] = useState<number>(0)
 
   useEffect(() => {
     checkConnection()
-    // Set up periodic connection check
-    const interval = setInterval(checkConnection, 30000) // Check every 30 seconds
-    return () => clearInterval(interval)
   }, [])
 
   const checkConnection = async () => {
-    setStatus('connecting')
-    setMessage('Testing database connection...')
-    
-    const result = await testDatabaseConnection()
-    
-    if (result.success) {
-      setStatus('connected')
-      setMessage('Database connected')
-      setStudentCount(result.count || 0)
-    } else {
+    try {
+      const { count, error } = await supabase
+        .from('students')
+        .select('*', { count: 'exact', head: true })
+      
+      if (error) {
+        setStatus('error')
+      } else {
+        setStatus('connected')
+        setStudentCount(count || 0)
+      }
+    } catch (error) {
       setStatus('error')
-      setMessage(result.error || 'Database connection failed')
     }
   }
 
@@ -52,16 +49,22 @@ export default function DatabaseStatus() {
     }
   }
 
+  const getMessage = () => {
+    switch (status) {
+      case 'connecting':
+        return 'Connecting...'
+      case 'connected':
+        return `Connected (${studentCount} students)`
+      case 'error':
+        return 'Connection failed'
+    }
+  }
+
   return (
-    <div className={`flex items-center space-x-3 px-4 py-2 rounded-lg border ${getStatusColor()}`}>
+    <div className={`flex items-center space-x-2 px-3 py-1 rounded-lg border text-sm ${getStatusColor()}`}>
       <Database className="h-4 w-4" />
       {getStatusIcon()}
-      <div className="flex-1">
-        <p className="text-sm font-medium">{message}</p>
-        {status === 'connected' && (
-          <p className="text-xs opacity-75">{studentCount} students loaded</p>
-        )}
-      </div>
+      <span>{getMessage()}</span>
       {status === 'error' && (
         <button
           onClick={checkConnection}
