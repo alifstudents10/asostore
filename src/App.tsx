@@ -59,9 +59,18 @@ function App() {
             </svg>
           </div>
           <h2 className="text-xl font-bold text-gray-900 mb-2">Connection Error</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <div className="text-gray-600 mb-4">
+            <p className="mb-2">{error}</p>
+            <details className="text-sm">
+              <summary className="cursor-pointer text-blue-600">Technical Details</summary>
+              <div className="mt-2 p-2 bg-gray-100 rounded text-left">
+                <p>Supabase URL: {import.meta.env.VITE_SUPABASE_URL ? 'Configured' : 'Missing'}</p>
+                <p>Supabase Key: {import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Configured' : 'Missing'}</p>
+              </div>
+            </details>
+          </div>
           <p className="text-sm text-gray-500">
-            Please check your internet connection and Supabase configuration.
+            Please check your environment variables and Supabase configuration.
           </p>
           <button 
             onClick={() => window.location.reload()} 

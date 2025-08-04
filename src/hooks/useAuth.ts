@@ -9,18 +9,21 @@ export function useAuth() {
 
   useEffect(() => {
     // Get initial session
+    console.log('Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
+    console.log('Supabase Key exists:', !!import.meta.env.VITE_SUPABASE_ANON_KEY);
+    
     supabase.auth.getSession()
       .then(({ data: { session }, error }) => {
         if (error) {
           console.error('Session error:', error);
-          setError(error.message);
+          setError(`Session error: ${error.message}`);
         }
         setUser(session?.user ?? null);
         setLoading(false);
       })
       .catch((err) => {
         console.error('Auth initialization error:', err);
-        setError('Failed to initialize authentication');
+        setError(`Auth initialization failed: ${err.message || 'Unknown error'}`);
         setLoading(false);
       });
 
