@@ -8,7 +8,7 @@ export function LoginForm() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, error: authError } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +21,13 @@ export function LoginForm() {
     const { error } = await signIn(email, password);
     
     if (error) {
-      toast.error('Invalid credentials');
+      if (error.message.includes('Network')) {
+        toast.error('Network error. Please check your connection.');
+      } else if (error.message.includes('Invalid')) {
+        toast.error('Invalid email or password');
+      } else {
+        toast.error(error.message || 'Sign in failed');
+      }
     } else {
       toast.success('Welcome back!');
     }
@@ -40,6 +46,12 @@ export function LoginForm() {
           <h1 className="text-2xl font-bold text-gray-900">ASOSTORE Admin</h1>
           <p className="text-gray-600 mt-2">Sign in to manage the wallet system</p>
         </div>
+
+        {authError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-sm text-red-600">{authError}</p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>

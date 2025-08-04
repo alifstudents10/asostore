@@ -218,14 +218,14 @@ export function Stock() {
   );
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'NGN',
+      currency: 'INR',
     }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-NG', {
+    return new Date(dateString).toLocaleDateString('en-IN', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -305,7 +305,7 @@ export function Stock() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Cost Price (₦)
+                Cost Price (₹)
               </label>
               <input
                 type="number"
@@ -320,7 +320,7 @@ export function Stock() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Selling Price (₦)
+                Selling Price (₹)
               </label>
               <input
                 type="number"

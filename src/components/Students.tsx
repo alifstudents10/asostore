@@ -123,15 +123,15 @@ export function Students() {
   });
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'NGN',
+      currency: 'INR',
     }).format(amount);
   };
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Never';
-    return new Date(dateString).toLocaleDateString('en-NG', {
+    return new Date(dateString).toLocaleDateString('en-IN', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',

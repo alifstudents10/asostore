@@ -149,14 +149,14 @@ export function Transactions() {
   });
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'NGN',
+      currency: 'INR',
     }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-NG', {
+    return new Date(dateString).toLocaleDateString('en-IN', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -227,7 +227,7 @@ export function Transactions() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Amount (₦)
+                Amount (₹)
               </label>
               <input
                 type="number"
